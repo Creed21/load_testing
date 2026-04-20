@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/load_testing
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+
+app:
+  seed: true
+  jwt:
+    secret: load-testing-jwt-secret-key-minimum-256-bits-long-for-hs256
+    expiration: 86400000
