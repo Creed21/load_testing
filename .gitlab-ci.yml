@@ -1,0 +1,79 @@
+stages:
+  - build
+  - test
+  - migrate
+  - docker
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: load_testing
+  DB_USER: postgres
+  # DB_PASSWORD — set as a masked variable in GitLab: Settings → CI/CD → Variables
+
+.postgres_service_vars: &postgres_service_vars
+  POSTGRES_DB: $DB_NAME
+  POSTGRES_USER: $DB_USER
+  POSTGRES_PASSWORD: $DB_PASSWORD
+
+cache:
+  paths:
+    - .m2/repository
+
+build:
+  stage: build
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - bash scripts/app.sh build
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 hour
+
+test:
+  stage: test
+  image: maven:3.9-eclipse-temurin-17
+  services:
+    - name: postgres:16
+      alias: postgres
+  variables:
+    <<: *postgres_service_vars
+    SPRING_PROFILES_ACTIVE: test
+    SPRING_DATASOURCE_URL: jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME
+    SPRING_DATASOURCE_USERNAME: $DB_USER
+    SPRING_DATASOURCE_PASSWORD: $DB_PASSWORD
+    JWT_SECRET: load-testing-jwt-secret-key-minimum-256-bits-long-for-hs256
+  script:
+    - bash scripts/app.sh test
+
+migrate:
+  stage: migrate
+  image: liquibase/liquibase:4.27
+  services:
+    - name: postgres:16
+      alias: postgres
+  variables:
+    <<: *postgres_service_vars
+  script:
+    - liquibase
+        --url="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME"
+        --username="$DB_USER"
+        --password="$DB_PASSWORD"
+        --changelog-file="db/changelog/db.changelog-master.xml"
+        --search-path="src/main/resources"
+        update
+
+docker:
+  stage: docker
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+  only:
+    - main

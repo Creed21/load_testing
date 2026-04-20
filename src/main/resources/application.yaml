@@ -1,3 +1,15 @@
 spring:
   application:
     name: load.testing
+#  profiles:
+#    active: dev
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+app:
+  seed: true
