@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="003-seed-movies" author="aleksandar.jankovic">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM movies</sqlCheck>
+        </preConditions>
+        <insert tableName="movies">
+            <column name="title"       value="Inception"/>
+            <column name="description" value="A thief who enters the dreams of others."/>
+            <column name="year"        valueNumeric="2010"/>
+            <column name="genre"       value="Sci-Fi"/>
+            <column name="director"    value="Christopher Nolan"/>
+        </insert>
+        <insert tableName="movies">
+            <column name="title"       value="The Matrix"/>
+            <column name="description" value="A hacker discovers the truth about reality."/>
+            <column name="year"        valueNumeric="1999"/>
+            <column name="genre"       value="Sci-Fi"/>
+            <column name="director"    value="The Wachowskis"/>
+        </insert>
+        <insert tableName="movies">
+            <column name="title"       value="Interstellar"/>
+            <column name="description" value="A team travels through a wormhole near Saturn."/>
+            <column name="year"        valueNumeric="2014"/>
+            <column name="genre"       value="Sci-Fi"/>
+            <column name="director"    value="Christopher Nolan"/>
+        </insert>
+        <insert tableName="movies">
+            <column name="title"       value="The Godfather"/>
+            <column name="description" value="The aging patriarch of a crime dynasty."/>
+            <column name="year"        valueNumeric="1972"/>
+            <column name="genre"       value="Crime"/>
+            <column name="director"    value="Francis Ford Coppola"/>
+        </insert>
+        <insert tableName="movies">
+            <column name="title"       value="Parasite"/>
+            <column name="description" value="Greed and class discrimination threaten a family."/>
+            <column name="year"        valueNumeric="2019"/>
+            <column name="genre"       value="Thriller"/>
+            <column name="director"    value="Bong Joon-ho"/>
+        </insert>
+        <insert tableName="movies">
+            <column name="title"       value="Pulp Fiction"/>
+            <column name="description" value="The lives of two mob hitmen intertwine."/>
+            <column name="year"        valueNumeric="1994"/>
+            <column name="genre"       value="Crime"/>
+            <column name="director"    value="Quentin Tarantino"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
