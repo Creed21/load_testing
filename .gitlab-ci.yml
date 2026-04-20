@@ -1,8 +1,17 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+    - when: never
+
 stages:
   - build
   - test
   - migrate
   - docker
+  - load-test
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
@@ -57,13 +66,14 @@ migrate:
   variables:
     <<: *postgres_service_vars
   script:
-    - liquibase
-        --url="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME"
-        --username="$DB_USER"
-        --password="$DB_PASSWORD"
-        --changelog-file="db/changelog/db.changelog-master.xml"
-        --search-path="src/main/resources"
-        update
+    - >
+      liquibase
+      --url="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME"
+      --username="$DB_USER"
+      --password="$DB_PASSWORD"
+      --changelog-file="db/changelog/db.changelog-master.xml"
+      --search-path="src/main/resources"
+      update
 
 docker:
   stage: docker
@@ -75,5 +85,15 @@ docker:
   script:
     - docker build -t $IMAGE_TAG .
     - docker push $IMAGE_TAG
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+
+load-test:
+  stage: load-test
+  image: maven:3.9-eclipse-temurin-17
+  variables:
+    TARGET_URL: "http://your-deployed-app:8080"
+  script:
+    - bash scripts/load-test.sh $TARGET_URL
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
