@@ -9,5 +9,6 @@
     <include file="changes/002-seed-users.xml"    relativeToChangelogFile="true"/>
     <include file="changes/003-seed-movies.xml"   relativeToChangelogFile="true"/>
     <include file="changes/004-add-movie-rating.xml" relativeToChangelogFile="true"/>
+    <include file="changes/005-seed-100k-movies.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

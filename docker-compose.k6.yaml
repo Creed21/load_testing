@@ -1,0 +1,95 @@
+services:
+  influxdb:
+    image: influxdb:1.8
+    ports:
+      - "8086:8086"
+    environment:
+      INFLUXDB_DB: k6
+      INFLUXDB_HTTP_AUTH_ENABLED: "false"
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - influxdb
+    networks:
+      - backend
+
+  k6-smoke:
+    image: grafana/k6:latest
+    volumes:
+      - ./k6:/scripts
+      - ./k6-results:/k6-results
+    environment:
+      TARGET_URL: http://app:8080
+    command: >
+      run
+      --tag testname=smoke
+      --out influxdb=http://influxdb:8086/k6
+      --out json=/k6-results/smoke-results.json
+      --summary-export=/k6-results/smoke-summary.json
+      /scripts/smoke-test.js
+    depends_on:
+      - influxdb
+    networks:
+      - backend
+    profiles:
+      - smoke
+
+  k6-load:
+    image: grafana/k6:latest
+    volumes:
+      - ./k6:/scripts
+      - ./k6-results:/k6-results
+    environment:
+      TARGET_URL: http://app:8080
+    command: >
+      run
+      --tag testname=load
+      --out influxdb=http://influxdb:8086/k6
+      --out json=/k6-results/load-results.json
+      --summary-export=/k6-results/load-summary.json
+      /scripts/load-test.js
+    depends_on:
+      - influxdb
+    networks:
+      - backend
+    profiles:
+      - load
+
+  k6-stress:
+    image: grafana/k6:latest
+    volumes:
+      - ./k6:/scripts
+      - ./k6-results:/k6-results
+    environment:
+      TARGET_URL: http://app:8080
+    command: >
+      run
+      --tag testname=stress
+      --out influxdb=http://influxdb:8086/k6
+      --out json=/k6-results/stress-results.json
+      --summary-export=/k6-results/stress-summary.json
+      /scripts/stress-test.js
+    depends_on:
+      - influxdb
+    networks:
+      - backend
+    profiles:
+      - stress
+
+volumes:
+  influxdb_data:
+  grafana_data:

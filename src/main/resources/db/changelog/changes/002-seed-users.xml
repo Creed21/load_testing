@@ -13,13 +13,13 @@
         <insert tableName="users">
             <column name="username" value="admin"/>
             <column name="email"    value="admin@loadtest.com"/>
-            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="password" value="$2b$10$zCCb5rLgjcx1KQ.nqsO50OPskY8ZDHBpccL/VuW4R.vxVxkZ0db3e"/>
             <column name="role"     value="ADMIN"/>
         </insert>
         <insert tableName="users">
             <column name="username" value="user"/>
             <column name="email"    value="user@loadtest.com"/>
-            <column name="password" value="$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW"/>
+            <column name="password" value="$2b$10$t12JhMujADtCZhgy.p6/.OJFPEGmRTKv56vQKw6fQ9jxEY28oPYBS"/>
             <column name="role"     value="USER"/>
         </insert>
     </changeSet>

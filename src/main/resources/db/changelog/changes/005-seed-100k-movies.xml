@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="005-seed-100k-movies" author="aleksandar.jankovic">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM movies WHERE title LIKE 'Movie %'</sqlCheck>
+        </preConditions>
+        <sql splitStatements="false">
+            INSERT INTO movies (title, description, year, genre, director, rating)
+            SELECT
+                'Movie ' || i,
+                'Auto-generated movie number ' || i || ' created for load testing purposes.',
+                1950 + (i % 75),
+                (ARRAY['Action','Comedy','Drama','Sci-Fi','Horror','Thriller','Romance','Crime','Animation','Documentary'])[(i % 10) + 1],
+                'Director ' || ((i % 200) + 1),
+                ROUND((RANDOM() * 9 + 1)::NUMERIC, 1)
+            FROM generate_series(1, 100000) AS s(i);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

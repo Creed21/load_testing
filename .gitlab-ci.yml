@@ -88,12 +88,72 @@ docker:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
 
+# Spins up the built JAR against a fresh postgres, seeds 100k movies via
+# Liquibase, then runs smoke → load → stress k6 tests.
+# Trigger: GitLab UI (manual web pipeline) or version tags (automatic).
+# Set START_APP=false + TARGET_URL to test an existing deployment instead.
 load-test:
   stage: load-test
-  image: maven:3.9-eclipse-temurin-17
+  image: eclipse-temurin:17-jdk
+  dependencies:
+    - build
+  services:
+    - name: postgres:16
+      alias: postgres
   variables:
-    TARGET_URL: "http://your-deployed-app:8080"
+    <<: *postgres_service_vars
+    JWT_SECRET: load-testing-jwt-secret-key-minimum-256-bits-long-for-hs256
+    APP_PORT: "8080"
+    TARGET_URL: "http://localhost:8080"
+    START_APP: "true"
+    RESULTS_DIR: "k6-results"
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq gpg curl ca-certificates
+    - gpg --no-default-keyring
+        --keyring /usr/share/keyrings/k6-archive-keyring.gpg
+        --keyserver hkp://keyserver.ubuntu.com:80
+        --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+    - echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main"
+        | tee /etc/apt/sources.list.d/k6.list
+    - apt-get update -qq && apt-get install -y -qq k6
+    - k6 version
+    - |
+      if [ "$START_APP" = "true" ]; then
+        JAR_FILE=$(ls target/*.jar | head -1)
+        echo "Starting application: $JAR_FILE"
+        java -jar "$JAR_FILE" \
+          --spring.profiles.active=prod \
+          --spring.datasource.url=jdbc:postgresql://postgres:5432/${DB_NAME} \
+          --spring.datasource.username=${DB_USER} \
+          --spring.datasource.password=${DB_PASSWORD} \
+          --jwt.secret=${JWT_SECRET} \
+          --app.seed=true \
+          --server.port=${APP_PORT} \
+          > app.log 2>&1 &
+        echo "Application PID: $!"
+      fi
   script:
-    - bash scripts/load-test.sh $TARGET_URL
+    - bash scripts/load-test.sh "$TARGET_URL"
+  after_script:
+    - |
+      if [ -f app.log ]; then
+        echo "=== Last 50 lines of application log ==="
+        tail -50 app.log
+      fi
+  artifacts:
+    name: "k6-results-$CI_COMMIT_SHORT_SHA"
+    expose_as: "Load Test Reports"
+    paths:
+      - k6-results/smoke-report.html
+      - k6-results/load-report.html
+      - k6-results/stress-report.html
+      - k6-results/
+      - app.log
+    expire_in: 30 days
+    when: always
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+      when: always
