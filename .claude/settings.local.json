@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(docker compose *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(glab *)"
     ]
   }
 }
