@@ -1,5 +1,25 @@
 # Project Progress Log
 
+## Session — 2026-04-22
+
+### v9 — Nginx reverse proxy + multi-instance deployment
+
+- Renamed `app` → `app1` + `app2` in `compose.yaml`; neither exposes a port directly
+- Added `nginx:alpine` service on port 80 with round-robin upstream to `app1:8080` and `app2:8080`
+- Created `nginx/nginx.conf` with upstream block and `proxy_set_header` forwarding
+- Fixed Liquibase race condition: `app1` has a healthcheck (curl `8081/actuator/health`), `app2` depends on `app1: service_healthy` so migrations only run once
+- Added `spring-boot-starter-actuator` and `micrometer-registry-prometheus` to `pom.xml`
+- Management server moved to port `8081` (separate from main API on `8080`)
+- Exposed endpoints: `health`, `info`, `metrics`, `prometheus`, `loggers`
+- `health.show-details: when-authorized` — anonymous callers see only `UP/DOWN`, authenticated users see full component details
+- `health.probes.enabled: true` — Kubernetes-style `/liveness` and `/readiness` sub-probes available
+- Added `info.app` block (name, version) visible at `/actuator/info`
+- Port 8081 never mapped in `compose.yaml` — internal only (used by healthcheck and Prometheus scraper)
+- `SecurityConfig` updated to permit `/actuator/health` on the main port as well
+- Created `docs/v9-nginx-multi-instance.md` with full architecture notes
+
+---
+
 ## Session — 2026-04-20
 
 ### What was built

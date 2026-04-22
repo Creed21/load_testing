@@ -14,6 +14,7 @@ Each version introduces one concept so nothing is mixed together.
 | [v6](v7-docker-profiles.md) | Docker + profiles — Dockerfile, docker-compose, dev/prod profiles |
 | [v7](v7-docker-profiles.md) | Security — JWT auth, BCrypt, role-based access control |
 | [v8](v8-load-testing-k6.md) | Load testing — 100k seed, k6 smoke/load/stress, Grafana, GitLab artifacts |
+| [v9](v9-nginx-multi-instance.md) | Nginx + multi-instance — reverse proxy, round-robin load balancing, Actuator on port 8081, Prometheus metrics |
 
 ## Stack
 
